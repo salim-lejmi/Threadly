@@ -1,5 +1,4 @@
 package com.example.server.dto;
-import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 import java.util.Date;
