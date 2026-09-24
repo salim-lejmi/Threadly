@@ -38,4 +38,19 @@ public class ThreadService {
         }
         threadRepository.deleteById(threadId);
     }
+    public Thread likeThread(long threadId){
+        Thread thread=threadRepository.findById(threadId)
+                .orElseThrow(()->new RuntimeException("Thread not found"));
+        long current= thread.getThreadLikes() == null ? 0 : thread.getThreadLikes().longValue();
+        thread.setThreadLikes(current+1);
+        return threadRepository.save(thread);
+
+    }
+    public Thread unlikeThread(long threadId){
+        Thread thread=threadRepository.findById(threadId)
+                .orElseThrow(()->new RuntimeException("Thread not found"));
+        long current=thread.getThreadLikes() ==null? 0 : thread.getThreadLikes().longValue();
+        thread.setThreadLikes(Math.max(0,current-1));
+        return threadRepository.save(thread);
+    }
 }

@@ -34,5 +34,22 @@ public class ReplyService {
         replyRepository.deleteById(replyId);
 
     }
+    public Reply likeReply(long replyId){
+        Reply reply=replyRepository.findById(replyId)
+                .orElseThrow(()->new RuntimeException("Reply not found"));
+        long current= reply.getReplyLikes() == null ? 0 : reply.getReplyLikes().longValue();
+        reply.setReplyLikes(current+1);
+        return replyRepository.save(reply);
+
+    }
+    public Reply unlikeReply(long replyId){
+        Reply reply=replyRepository.findById(replyId)
+                .orElseThrow(()->new RuntimeException("Reply not found"));
+        long current= reply.getReplyLikes() == null ? 0 : reply.getReplyLikes().longValue();
+        reply.setReplyLikes(Math.max(0,current-1));
+        return replyRepository.save(reply);
+
+    }
+
 
 }

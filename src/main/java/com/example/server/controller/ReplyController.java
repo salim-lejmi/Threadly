@@ -2,6 +2,7 @@ package com.example.server.controller;
 
 import com.example.server.dto.ReplyRequest;
 import com.example.server.model.Reply;
+import com.example.server.model.Thread;
 import com.example.server.model.User;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.ReplyService;
@@ -32,5 +33,13 @@ public class ReplyController {
     @DeleteMapping("/{replyId}")
     public void deleteReply(@PathVariable long replyId){
         replyService.deleteReply(replyId);
+    }
+    @PostMapping("/{replyId}/like")
+    public Reply likeReply(long replyId){
+        return replyService.likeReply(replyId);
+    }
+    @DeleteMapping ("/{replyId}/like")
+    public Reply unlikeReply(long replyId){
+        return replyService.unlikeReply(replyId);
     }
 }

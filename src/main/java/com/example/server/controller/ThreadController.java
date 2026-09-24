@@ -3,6 +3,7 @@ package com.example.server.controller;
 import com.example.server.dto.ThreadRequest;
 import com.example.server.model.Thread;
 import com.example.server.model.User;
+import com.example.server.repository.ThreadRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.ThreadService;
 import jakarta.servlet.http.HttpSession;
@@ -19,6 +20,8 @@ public class ThreadController {
 
     private final ThreadService threadService;
     private final UserRepository userRepository;
+    private final ThreadRepository threadRepository;
+
     @GetMapping
     public List<Thread> getAllThreads(){
         return threadService.getAllThreads();
@@ -47,5 +50,13 @@ public class ThreadController {
     @DeleteMapping("/{threadId}")
     public void deleteThread(@PathVariable long threadId){
         threadService.deleteThread(threadId);
+    }
+    @PostMapping("/{threadId}/like")
+    public Thread likeThread(long threadId){
+        return threadService.likeThread(threadId);
+    }
+    @DeleteMapping ("/{threadId}/like")
+    public Thread unlikeThread(long threadId){
+        return threadService.unlikeThread(threadId);
     }
 }
