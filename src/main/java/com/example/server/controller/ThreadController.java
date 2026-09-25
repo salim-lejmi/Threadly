@@ -48,15 +48,19 @@ public class ThreadController {
     }
 
     @DeleteMapping("/{threadId}")
-    public void deleteThread(@PathVariable long threadId){
-        threadService.deleteThread(threadId);
+    public void deleteThread(@PathVariable long threadId, HttpSession session){
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null){
+            throw new RuntimeException("Not logged in");
+        }
+        threadService.deleteThread(threadId, userId);
     }
     @PostMapping("/{threadId}/like")
-    public Thread likeThread(long threadId){
+    public Thread likeThread(@PathVariable long threadId){
         return threadService.likeThread(threadId);
     }
     @DeleteMapping ("/{threadId}/like")
-    public Thread unlikeThread(long threadId){
+    public Thread unlikeThread(@PathVariable long threadId){
         return threadService.unlikeThread(threadId);
     }
 }

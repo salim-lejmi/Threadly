@@ -27,12 +27,13 @@ public class ReplyService {
     public List<Reply> getRepliesByThread(long threadId){
         return replyRepository.findByThread_ThreadIdOrderByReplyDateAsc(threadId);
     }
-    public void deleteReply(long replyId){
-        if (!replyRepository.existsById(replyId)){
-            throw new RuntimeException("Thread not found");
+    public void deleteReply(long replyId, long currentUserId){
+        Reply reply = replyRepository.findById(replyId)
+                .orElseThrow(() -> new RuntimeException("Reply not found"));
+        if (reply.getCreatedBy().getId() != currentUserId){
+            throw new RuntimeException("You can't delete someone else's reply");
         }
         replyRepository.deleteById(replyId);
-
     }
     public Reply likeReply(long replyId){
         Reply reply=replyRepository.findById(replyId)

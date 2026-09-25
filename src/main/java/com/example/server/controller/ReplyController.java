@@ -31,15 +31,19 @@ public class ReplyController {
                 .orElseThrow(()->new RuntimeException("User not found"));
         return replyService.createReply(request, currentUser, threadId);    }
     @DeleteMapping("/{replyId}")
-    public void deleteReply(@PathVariable long replyId){
-        replyService.deleteReply(replyId);
+    public void deleteReply(@PathVariable long replyId, HttpSession session){
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null){
+            throw new RuntimeException("Not logged in");
+        }
+        replyService.deleteReply(replyId, userId);
     }
     @PostMapping("/{replyId}/like")
-    public Reply likeReply(long replyId){
+    public Reply likeReply(@PathVariable long replyId){
         return replyService.likeReply(replyId);
     }
     @DeleteMapping ("/{replyId}/like")
-    public Reply unlikeReply(long replyId){
+    public Reply unlikeReply(@PathVariable long replyId){
         return replyService.unlikeReply(replyId);
     }
 }

@@ -40,4 +40,8 @@ public class AuthService {
         }
         return user;
     }
+    public User getUserById(long id){
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

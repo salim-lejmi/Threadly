@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AuthController {
 
     private final AuthService authService;
@@ -29,6 +28,17 @@ public class AuthController {
         session.setAttribute("userId", user.getId());
         return user;
     }
-
+    @PostMapping("/logout")
+    public void logout(HttpSession session){
+        session.invalidate();
+    }
+    @GetMapping("/me")
+    public User me(HttpSession session){
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null){
+            throw new RuntimeException("Not logged in");
+        }
+        return authService.getUserById(userId);
+    }
 
 }

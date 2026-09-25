@@ -32,9 +32,11 @@ public class ThreadService {
 
         return threadRepository.save(thread);
     }
-    public void deleteThread(long threadId){
-        if(!threadRepository.existsById(threadId)){
-            throw new RuntimeException("Thread not found");
+    public void deleteThread(long threadId, long currentUserId){
+        Thread thread = threadRepository.findById(threadId)
+                .orElseThrow(() -> new RuntimeException("Thread not found"));
+        if (thread.getCreatedBy().getId() != currentUserId){
+            throw new RuntimeException("You can't delete someone else's thread");
         }
         threadRepository.deleteById(threadId);
     }
