@@ -21,6 +21,11 @@ public class ReplyController {
     private final UserRepository userRepository;
     private final ThreadService threadService;
 
+    @GetMapping
+    public List<Reply> getReplies(@PathVariable long threadId){
+        return replyService.getRepliesByThread(threadId);
+    }
+
     @PostMapping
     public Reply createReply(@Valid @RequestBody ReplyRequest request,HttpSession session,@PathVariable long threadId){
         Long userId=(Long) session.getAttribute("userId");
