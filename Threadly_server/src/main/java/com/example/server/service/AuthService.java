@@ -12,10 +12,11 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository,PasswordEncoder passwordEncoder){
-        this.userRepository=userRepository;
-        this.passwordEncoder=passwordEncoder;
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
+
     public User signup(@Valid SignupRequest request){
         if (userRepository.existsByEmail(request.getEmail())){
             throw new RuntimeException("Email already exists");
@@ -32,14 +33,17 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public User login(String username,String password){
-        User user=userRepository.findByUsername(username).orElse(null);
-        if (user==null || !passwordEncoder.matches(password,user.getPassword())){
-            throw new RuntimeException("email or password doesn't match");
-
+    public User login(String username, String password){
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())){
+            throw new RuntimeException("Username or password doesn't match");
+        }
+        if (user.isBanned()){
+            throw new RuntimeException("This account has been banned");
         }
         return user;
     }
+
     public User getUserById(long id){
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));

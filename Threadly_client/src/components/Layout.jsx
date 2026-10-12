@@ -1,13 +1,14 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
-import { HomeIcon, SearchIcon, UserIcon, LogoutIcon } from "./Icons";
+import { HomeIcon, SearchIcon, UserIcon, ShieldIcon, LogoutIcon } from "./Icons";
 import Avatar from "./Avatar";
 
 function Layout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const isAdmin = user.role === "role-admin";
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -35,6 +36,12 @@ function Layout() {
             <UserIcon />
             <span className="nav-label">Profile</span>
           </NavLink>
+          {isAdmin && (
+            <NavLink to="/admin" className="nav-item">
+              <ShieldIcon />
+              <span className="nav-label">Admin</span>
+            </NavLink>
+          )}
           <button className="nav-item" onClick={handleLogout}>
             <LogoutIcon />
             <span className="nav-label">Log out</span>

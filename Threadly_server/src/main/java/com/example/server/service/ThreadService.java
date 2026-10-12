@@ -25,7 +25,7 @@ public class ThreadService {
     private final FollowRepository followRepository;
 
     public List<Thread> getAllThreads(){
-        return threadRepository.findAllByOrderByThreadDateDesc();
+        return threadRepository.findAllByCreatedBy_BannedFalseOrderByThreadDateDesc();
     }
 
     public List<Thread> getFeed(long userId){
@@ -35,7 +35,7 @@ public class ThreadService {
                         .toList()
         );
         ids.add(userId);
-        return threadRepository.findByCreatedBy_IdInOrderByThreadDateDesc(ids);
+        return threadRepository.findByCreatedBy_IdInAndCreatedBy_BannedFalseOrderByThreadDateDesc(ids);
     }
 
     public List<Thread> getThreadsByUser(long userId){
@@ -55,10 +55,12 @@ public class ThreadService {
     }
 
     @Transactional
-    public void deleteThread(long threadId, long currentUserId){
+    public void deleteThread(long threadId, User currentUser){
         Thread thread = threadRepository.findById(threadId)
                 .orElseThrow(() -> new RuntimeException("Thread not found"));
-        if (thread.getCreatedBy().getId() != currentUserId){
+
+        boolean isAdmin = User.ROLE_ADMIN.equals(currentUser.getRole());
+        if (!isAdmin && thread.getCreatedBy().getId() != currentUser.getId()){
             throw new RuntimeException("You can't delete someone else's thread");
         }
 

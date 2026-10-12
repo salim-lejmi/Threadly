@@ -46,7 +46,7 @@ public class ReplyController {
 
     @DeleteMapping("/{replyId}")
     public void deleteReply(@PathVariable long replyId, HttpSession session){
-        replyService.deleteReply(replyId, getCurrentUser(session).getId());
+        replyService.deleteReply(replyId, getCurrentUser(session));
     }
 
     @PostMapping("/{replyId}/like")

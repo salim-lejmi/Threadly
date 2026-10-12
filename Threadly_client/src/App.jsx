@@ -8,7 +8,9 @@ import SignupPage from "./pages/SignupPage";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import SearchPage from "./pages/SearchPage";
+import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import Layout from "./components/Layout";
 
 function App() {
@@ -36,6 +38,14 @@ function App() {
         <Route path="/" element={<FeedPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

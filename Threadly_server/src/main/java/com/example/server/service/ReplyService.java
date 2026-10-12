@@ -7,10 +7,12 @@ import com.example.server.model.Thread;
 import com.example.server.model.User;
 import com.example.server.repository.ReplyLikeRepository;
 import com.example.server.repository.ReplyRepository;
+import com.example.server.repository.RetweetRepository;
 import com.example.server.repository.ThreadRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class ReplyService {
     private final ReplyRepository replyRepository;
     private final ThreadRepository threadRepository;
     private final ReplyLikeRepository replyLikeRepository;
+    private final RetweetRepository retweetRepository;
 
     public Reply createReply(@Valid ReplyRequest request, User currentUser, long threadId){
         Thread thread = threadRepository.findById(threadId)
@@ -32,16 +35,22 @@ public class ReplyService {
     }
 
     public List<Reply> getRepliesByThread(long threadId){
-        return replyRepository.findByThread_ThreadIdOrderByReplyDateAsc(threadId);
+        return replyRepository.findByThread_ThreadIdAndCreatedBy_BannedFalseOrderByReplyDateAsc(threadId);
     }
 
-    public void deleteReply(long replyId, long currentUserId){
+    @Transactional
+    public void deleteReply(long replyId, User currentUser){
         Reply reply = replyRepository.findById(replyId)
                 .orElseThrow(() -> new RuntimeException("Reply not found"));
-        if (reply.getCreatedBy().getId() != currentUserId){
+
+        boolean isAdmin = User.ROLE_ADMIN.equals(currentUser.getRole());
+        if (!isAdmin && reply.getCreatedBy().getId() != currentUser.getId()){
             throw new RuntimeException("You can't delete someone else's reply");
         }
-        replyRepository.deleteById(replyId);
+
+        replyLikeRepository.deleteByReply_ReplyId(replyId);
+        retweetRepository.deleteByReply_ReplyId(replyId);
+        replyRepository.delete(reply);
     }
 
     public Reply likeReply(long replyId, User currentUser){

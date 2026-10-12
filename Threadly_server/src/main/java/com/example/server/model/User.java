@@ -13,6 +13,9 @@ import java.util.Date;
 @Table(name = "users")
 @Data
 public class User {
+    public static final String ROLE_USER = "role-user";
+    public static final String ROLE_ADMIN = "role-admin";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -44,5 +47,8 @@ public class User {
 
     private Date createdAt = new Date();
 
-    private String role = "role-user";
+    private String role = ROLE_USER;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean banned = false;
 }

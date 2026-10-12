@@ -19,11 +19,12 @@ public class SearchController {
 
     @GetMapping("/users")
     public List<User> searchUsers(@RequestParam String q){
-        return userRepository.findTop20ByUsernameContainingIgnoreCase(q);
+        return userRepository.findTop20ByUsernameContainingIgnoreCaseAndBannedFalse(q);
     }
 
     @GetMapping("/threads")
     public List<Thread> searchThreads(@RequestParam String q){
-        return threadRepository.findTop30ByThreadTextContainingIgnoreCaseOrderByThreadDateDesc(q);
+        return threadRepository
+                .findTop30ByThreadTextContainingIgnoreCaseAndCreatedBy_BannedFalseOrderByThreadDateDesc(q);
     }
-}   
+}

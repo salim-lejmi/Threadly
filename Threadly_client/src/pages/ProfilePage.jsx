@@ -49,6 +49,10 @@ function ProfilePage() {
     dispatch(fetchRetweetsByUser(currentUser.id));
   }, [dispatch, userId, currentUser.id]);
 
+  if (userStatus === "failed") {
+    return <p className="empty-state">This account doesn't exist or isn't available.</p>;
+  }
+
   if (userStatus === "loading" || !profileUser) {
     return <p className="status-text">Loading profile...</p>;
   }
@@ -127,6 +131,7 @@ function ProfilePage() {
 
         <h2 className="profile-name">{profileUser.username}</h2>
         <p className="profile-handle">@{profileUser.username}</p>
+        {profileUser.banned && <span className="badge badge-banned">banned</span>}
         {profileUser.bio && <p className="profile-bio">{profileUser.bio}</p>}
 
         <p className="profile-stats">

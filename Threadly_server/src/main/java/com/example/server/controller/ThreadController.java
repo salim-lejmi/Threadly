@@ -61,7 +61,7 @@ public class ThreadController {
 
     @DeleteMapping("/{threadId}")
     public void deleteThread(@PathVariable long threadId, HttpSession session){
-        threadService.deleteThread(threadId, getCurrentUser(session).getId());
+        threadService.deleteThread(threadId, getCurrentUser(session));
     }
 
     @PostMapping("/{threadId}/like")
