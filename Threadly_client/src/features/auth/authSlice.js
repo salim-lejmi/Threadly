@@ -38,27 +38,25 @@ export const logout = createAsyncThunk(
   }
 );
 
-// used on app load to check if there's already a valid session cookie
-export const fetchMe = createAsyncThunk(
+ export const fetchMe = createAsyncThunk(
   "auth/fetchMe",
   async (_, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get("/me");
       return res.data;
     } catch (err) {
-      // not logged in — not a real error, just no session
-      return rejectWithValue(null);
+       return rejectWithValue(null);
     }
   }
 );
 
-// --- Slice ---
+ 
 
 const initialState = {
   user: null,
-  status: "idle",       // idle | loading | succeeded | failed
+  status: "idle",     
   error: null,
-  checkedAuth: false,   // has the initial /me check run yet?
+  checkedAuth: false,    
 };
 
 const authSlice = createSlice({
@@ -71,7 +69,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // signup
       .addCase(signup.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -84,8 +81,7 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
       })
-      // login
-      .addCase(login.pending, (state) => {
+       .addCase(login.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
@@ -97,13 +93,11 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
       })
-      // logout
-      .addCase(logout.fulfilled, (state) => {
+       .addCase(logout.fulfilled, (state) => {
         state.user = null;
         state.status = "idle";
       })
-      // fetchMe (initial auth check)
-      .addCase(fetchMe.pending, (state) => {
+       .addCase(fetchMe.pending, (state) => {
         state.status = "loading";
       })
       .addCase(fetchMe.fulfilled, (state, action) => {

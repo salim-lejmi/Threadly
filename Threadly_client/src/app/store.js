@@ -5,6 +5,7 @@ import repliesReducer from "../features/replies/replySlice";
 import followReducer from "../features/follow/followSlice";
 import retweetReducer from "../features/retweet/retweetSlice";
 import usersReducer from "../features/users/userSlice";
+import searchReducer from "../features/search/searchSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,6 @@ export const store = configureStore({
     follow: followReducer,
     retweet: retweetReducer,
     users: usersReducer,
-
+    search: searchReducer,
   },
 });

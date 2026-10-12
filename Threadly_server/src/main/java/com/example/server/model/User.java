@@ -1,12 +1,16 @@
 package com.example.server.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
+
 @Entity
+@Table(name = "users")
 @Data
 public class User {
     @Id
@@ -17,25 +21,28 @@ public class User {
     @Column(unique = true)
     private String username;
 
+    @JsonIgnore
     @Email
     @NotBlank(message = "Email is required")
     @Column(unique = true)
     private String email;
 
-    @NotBlank(message="Password required")
+    @JsonIgnore
+    @NotBlank(message = "Password required")
     private String password;
 
-    @NotBlank(message="Phone number required")
-    private Number phoneNumber;
+    @JsonIgnore
+    @NotNull(message = "Phone number required")
+    private Long phoneNumber;
 
     private String profilePicture;
 
     private String bio;
 
+    @JsonIgnore
     private Date birthDate = new Date();
 
     private Date createdAt = new Date();
 
-    private String role="role-user";
-
+    private String role = "role-user";
 }

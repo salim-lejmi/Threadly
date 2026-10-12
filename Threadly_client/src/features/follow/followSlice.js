@@ -50,8 +50,8 @@ export const fetchFollowers = createAsyncThunk(
 );
 
 const initialState = {
-  following: [],  
-  followers: [],   
+  following: [],
+  followers: [],
   status: "idle",
   error: null,
 };
@@ -62,16 +62,6 @@ const followSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(followUser.fulfilled, (state, action) => {
-        state.following.push(action.payload);
-      })
-
-      .addCase(unfollowUser.fulfilled, (state, action) => {
-        state.following = state.following.filter(
-          (f) => f.following.id !== action.payload
-        );
-      })
-
       .addCase(fetchFollowing.pending, (state) => {
         state.status = "loading";
       })
@@ -83,7 +73,6 @@ const followSlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
       })
-
       .addCase(fetchFollowers.fulfilled, (state, action) => {
         state.followers = action.payload;
       });

@@ -1,32 +1,40 @@
 package com.example.server.service;
-import com.example.server.model.User;
+
+import com.example.server.dto.ReplyRequest;
 import com.example.server.model.Reply;
+import com.example.server.model.ReplyLike;
 import com.example.server.model.Thread;
+import com.example.server.model.User;
+import com.example.server.repository.ReplyLikeRepository;
+import com.example.server.repository.ReplyRepository;
 import com.example.server.repository.ThreadRepository;
 import jakarta.validation.Valid;
-import com.example.server.dto.ReplyRequest;
-import com.example.server.repository.ReplyRepository;
 import lombok.RequiredArgsConstructor;
-import java.util.List;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service
 public class ReplyService {
     private final ReplyRepository replyRepository;
     private final ThreadRepository threadRepository;
-    public Reply createReply(@Valid ReplyRequest request, User currentUser,long threadId){
-        Thread thread= threadRepository.findById(threadId)
-                .orElseThrow(()->new RuntimeException("Thread not found"));
-        Reply reply=new Reply();
+    private final ReplyLikeRepository replyLikeRepository;
+
+    public Reply createReply(@Valid ReplyRequest request, User currentUser, long threadId){
+        Thread thread = threadRepository.findById(threadId)
+                .orElseThrow(() -> new RuntimeException("Thread not found"));
+        Reply reply = new Reply();
         reply.setReplyText(request.getReplyText());
         reply.setThread(thread);
         reply.setCreatedBy(currentUser);
         return replyRepository.save(reply);
-
     }
+
     public List<Reply> getRepliesByThread(long threadId){
         return replyRepository.findByThread_ThreadIdOrderByReplyDateAsc(threadId);
     }
+
     public void deleteReply(long replyId, long currentUserId){
         Reply reply = replyRepository.findById(replyId)
                 .orElseThrow(() -> new RuntimeException("Reply not found"));
@@ -35,22 +43,38 @@ public class ReplyService {
         }
         replyRepository.deleteById(replyId);
     }
-    public Reply likeReply(long replyId){
-        Reply reply=replyRepository.findById(replyId)
-                .orElseThrow(()->new RuntimeException("Reply not found"));
-        long current= reply.getReplyLikes() == null ? 0 : reply.getReplyLikes().longValue();
-        reply.setReplyLikes(current+1);
+
+    public Reply likeReply(long replyId, User currentUser){
+        Reply reply = replyRepository.findById(replyId)
+                .orElseThrow(() -> new RuntimeException("Reply not found"));
+        if (replyLikeRepository.findByUser_IdAndReply_ReplyId(currentUser.getId(), replyId).isPresent()){
+            throw new RuntimeException("Already liked");
+        }
+        ReplyLike like = new ReplyLike();
+        like.setUser(currentUser);
+        like.setReply(reply);
+        replyLikeRepository.save(like);
+
+        long current = reply.getReplyLikes() == null ? 0 : reply.getReplyLikes();
+        reply.setReplyLikes(current + 1);
         return replyRepository.save(reply);
-
     }
-    public Reply unlikeReply(long replyId){
-        Reply reply=replyRepository.findById(replyId)
-                .orElseThrow(()->new RuntimeException("Reply not found"));
-        long current= reply.getReplyLikes() == null ? 0 : reply.getReplyLikes().longValue();
-        reply.setReplyLikes(Math.max(0,current-1));
+
+    public Reply unlikeReply(long replyId, User currentUser){
+        Reply reply = replyRepository.findById(replyId)
+                .orElseThrow(() -> new RuntimeException("Reply not found"));
+        ReplyLike like = replyLikeRepository.findByUser_IdAndReply_ReplyId(currentUser.getId(), replyId)
+                .orElseThrow(() -> new RuntimeException("You haven't liked this reply"));
+        replyLikeRepository.delete(like);
+
+        long current = reply.getReplyLikes() == null ? 0 : reply.getReplyLikes();
+        reply.setReplyLikes(Math.max(0, current - 1));
         return replyRepository.save(reply);
-
     }
 
-
+    public List<Long> getLikedReplyIds(long userId){
+        return replyLikeRepository.findByUser_Id(userId).stream()
+                .map(l -> l.getReply().getReplyId())
+                .toList();
+    }
 }

@@ -14,7 +14,7 @@ public class Reply {
     private String replyText;
 
     private Date replyDate = new Date();
-    private Number replyLikes;
+    private Long replyLikes;
     @ManyToOne
     @JoinColumn(name = "thread_id")
     private Thread thread;

@@ -6,6 +6,10 @@ import java.util.Date;
 
 @Entity
 @Data
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"retweeted_by_id", "thread_id"}),
+        @UniqueConstraint(columnNames = {"retweeted_by_id", "reply_id"})
+})
 public class Retweet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

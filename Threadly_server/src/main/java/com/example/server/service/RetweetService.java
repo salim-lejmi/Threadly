@@ -1,10 +1,15 @@
 package com.example.server.service;
 
-import com.example.server.model.*;
+import com.example.server.model.Reply;
+import com.example.server.model.Retweet;
 import com.example.server.model.Thread;
-import com.example.server.repository.*;
+import com.example.server.model.User;
+import com.example.server.repository.ReplyRepository;
+import com.example.server.repository.RetweetRepository;
+import com.example.server.repository.ThreadRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -18,7 +23,9 @@ public class RetweetService {
     public Retweet retweetThread(long threadId, User currentUser){
         Thread thread = threadRepository.findById(threadId)
                 .orElseThrow(() -> new RuntimeException("Thread not found"));
-
+        if (retweetRepository.findByRetweetedBy_IdAndThread_ThreadId(currentUser.getId(), threadId).isPresent()){
+            throw new RuntimeException("Already retweeted");
+        }
         Retweet retweet = new Retweet();
         retweet.setThread(thread);
         retweet.setRetweetedBy(currentUser);
@@ -35,7 +42,9 @@ public class RetweetService {
     public Retweet retweetReply(long replyId, User currentUser){
         Reply reply = replyRepository.findById(replyId)
                 .orElseThrow(() -> new RuntimeException("Reply not found"));
-
+        if (retweetRepository.findByRetweetedBy_IdAndReply_ReplyId(currentUser.getId(), replyId).isPresent()){
+            throw new RuntimeException("Already retweeted");
+        }
         Retweet retweet = new Retweet();
         retweet.setReply(reply);
         retweet.setRetweetedBy(currentUser);

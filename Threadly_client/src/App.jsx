@@ -7,7 +7,9 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
+import SearchPage from "./pages/SearchPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
 
 function App() {
   const dispatch = useDispatch();
@@ -17,28 +19,25 @@ function App() {
     dispatch(fetchMe());
   }, [dispatch]);
 
-  if (!checkedAuth) return <div>Loading...</div>;
+  if (!checkedAuth) return <p className="status-text">Loading...</p>;
 
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+
       <Route
-        path="/"
         element={
           <ProtectedRoute>
-            <FeedPage />
+            <Layout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/profile/:userId"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/" element={<FeedPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/profile/:userId" element={<ProfilePage />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

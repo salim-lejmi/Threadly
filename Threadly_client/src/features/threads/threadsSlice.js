@@ -3,12 +3,24 @@ import axiosInstance from "../../api/axiosInstance";
 
 export const fetchAllThreads = createAsyncThunk(
   "threads/fetchAll",
-  async (_, { rejectWithValue }) => { 
+  async (_, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get("/threads");
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to fetch threads");
+    }
+  }
+);
+
+export const fetchFeed = createAsyncThunk(
+  "threads/fetchFeed",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/threads/feed");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch feed");
     }
   }
 );
@@ -22,7 +34,7 @@ export const fetchThreadsByUser = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to fetch user threads");
     }
-  } 
+  }
 );
 
 export const fetchThreadById = createAsyncThunk(
@@ -33,6 +45,18 @@ export const fetchThreadById = createAsyncThunk(
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Thread not found");
+    }
+  }
+);
+
+export const fetchLikedThreadIds = createAsyncThunk(
+  "threads/fetchLikedIds",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/threads/liked");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch likes");
     }
   }
 );
@@ -86,11 +110,26 @@ export const unlikeThread = createAsyncThunk(
 );
 
 const initialState = {
-  items: [],         
+  items: [],
+  likedIds: [],
   currentThread: null,
   status: "idle",
   error: null,
 };
+
+function replaceThread(state, updatedThread) {
+  const index = state.items.findIndex((t) => t.threadId === updatedThread.threadId);
+  if (index !== -1) state.items[index] = updatedThread;
+  if (state.currentThread?.threadId === updatedThread.threadId) {
+    state.currentThread = updatedThread;
+  }
+}
+
+function startLoading(state) {
+  state.status = "loading";
+  state.error = null;
+  state.items = [];
+}
 
 const threadsSlice = createSlice({
   name: "threads",
@@ -98,9 +137,7 @@ const threadsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAllThreads.pending, (state) => {
-        state.status = "loading";
-      })
+      .addCase(fetchAllThreads.pending, startLoading)
       .addCase(fetchAllThreads.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.items = action.payload;
@@ -110,17 +147,36 @@ const threadsSlice = createSlice({
         state.error = action.payload;
       })
 
+      .addCase(fetchFeed.pending, startLoading)
+      .addCase(fetchFeed.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload;
+      })
+      .addCase(fetchFeed.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+
+      .addCase(fetchThreadsByUser.pending, startLoading)
       .addCase(fetchThreadsByUser.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.items = action.payload;
+      })
+      .addCase(fetchThreadsByUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
       })
 
       .addCase(fetchThreadById.fulfilled, (state, action) => {
         state.currentThread = action.payload;
       })
 
+      .addCase(fetchLikedThreadIds.fulfilled, (state, action) => {
+        state.likedIds = action.payload;
+      })
+
       .addCase(createThread.fulfilled, (state, action) => {
-        state.items.unshift(action.payload); // add to top of feed
+        state.items.unshift(action.payload);
       })
 
       .addCase(deleteThread.fulfilled, (state, action) => {
@@ -129,19 +185,15 @@ const threadsSlice = createSlice({
 
       .addCase(likeThread.fulfilled, (state, action) => {
         replaceThread(state, action.payload);
+        if (!state.likedIds.includes(action.payload.threadId)) {
+          state.likedIds.push(action.payload.threadId);
+        }
       })
       .addCase(unlikeThread.fulfilled, (state, action) => {
         replaceThread(state, action.payload);
+        state.likedIds = state.likedIds.filter((id) => id !== action.payload.threadId);
       });
   },
 });
-
-function replaceThread(state, updatedThread) {
-  const index = state.items.findIndex((t) => t.threadId === updatedThread.threadId);
-  if (index !== -1) state.items[index] = updatedThread;
-  if (state.currentThread?.threadId === updatedThread.threadId) {
-    state.currentThread = updatedThread;
-  }
-}
 
 export default threadsSlice.reducer;
