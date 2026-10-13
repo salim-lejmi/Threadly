@@ -2,6 +2,7 @@ package com.example.server.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.util.Date;
 
 @Entity
@@ -14,7 +15,11 @@ public class Reply {
     private String replyText;
 
     private Date replyDate = new Date();
+
     private Long replyLikes;
+
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "thread_id")
     private Thread thread;

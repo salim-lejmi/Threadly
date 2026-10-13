@@ -8,6 +8,7 @@ import SignupPage from "./pages/SignupPage";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import SearchPage from "./pages/SearchPage";
+import ThreadDetailPage from "./pages/ThreadDetailPage";
 import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -37,6 +38,7 @@ function App() {
       >
         <Route path="/" element={<FeedPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/thread/:threadId" element={<ThreadDetailPage />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
         <Route
           path="/admin"

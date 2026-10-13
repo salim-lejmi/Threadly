@@ -5,6 +5,7 @@ import com.example.server.model.User;
 import com.example.server.repository.ThreadRepository;
 import com.example.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +25,6 @@ public class SearchController {
 
     @GetMapping("/threads")
     public List<Thread> searchThreads(@RequestParam String q){
-        return threadRepository
-                .findTop30ByThreadTextContainingIgnoreCaseAndCreatedBy_BannedFalseOrderByThreadDateDesc(q);
+        return threadRepository.searchListings(q, PageRequest.of(0, 30));
     }
 }

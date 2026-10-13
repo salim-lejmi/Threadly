@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
-
+import { updateAvatar, removeAvatar, updateBio } from "../users/userSlice";
 
 export const signup = createAsyncThunk(
   "auth/signup",
@@ -38,25 +38,23 @@ export const logout = createAsyncThunk(
   }
 );
 
- export const fetchMe = createAsyncThunk(
+export const fetchMe = createAsyncThunk(
   "auth/fetchMe",
   async (_, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get("/me");
       return res.data;
     } catch (err) {
-       return rejectWithValue(null);
+      return rejectWithValue(null);
     }
   }
 );
 
- 
-
 const initialState = {
   user: null,
-  status: "idle",     
+  status: "idle",
   error: null,
-  checkedAuth: false,    
+  checkedAuth: false,
 };
 
 const authSlice = createSlice({
@@ -81,7 +79,8 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
       })
-       .addCase(login.pending, (state) => {
+
+      .addCase(login.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
@@ -93,11 +92,13 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
       })
-       .addCase(logout.fulfilled, (state) => {
+
+      .addCase(logout.fulfilled, (state) => {
         state.user = null;
         state.status = "idle";
       })
-       .addCase(fetchMe.pending, (state) => {
+
+      .addCase(fetchMe.pending, (state) => {
         state.status = "loading";
       })
       .addCase(fetchMe.fulfilled, (state, action) => {
@@ -109,6 +110,17 @@ const authSlice = createSlice({
         state.user = null;
         state.status = "idle";
         state.checkedAuth = true;
+      })
+
+      // keep the sidebar avatar in sync after editing the profile
+      .addCase(updateAvatar.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      .addCase(removeAvatar.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      .addCase(updateBio.fulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });

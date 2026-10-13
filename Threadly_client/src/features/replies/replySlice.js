@@ -13,14 +13,29 @@ export const fetchRepliesByThread = createAsyncThunk(
   }
 );
 
-export const createReply = createAsyncThunk(
-  "replies/create",
-  async ({ threadId, replyText }, { rejectWithValue }) => {
+export const fetchLikedReplyIds = createAsyncThunk(
+  "replies/fetchLikedIds",
+  async (threadId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post(`/threads/${threadId}/replies`, { replyText });
+      const res = await axiosInstance.get(`/threads/${threadId}/replies/liked`);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to create reply");
+      return rejectWithValue(err.response?.data || "Failed to fetch likes");
+    }
+  }
+);
+
+export const createReply = createAsyncThunk(
+  "replies/create",
+  async ({ threadId, replyText, image }, { rejectWithValue }) => {
+    try {
+      const form = new FormData();
+      form.append("replyText", replyText || "");
+      if (image) form.append("image", image);
+      const res = await axiosInstance.post(`/threads/${threadId}/replies`, form);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(typeof err.response?.data === "string" ? err.response.data : "Failed to create reply");
     }
   }
 );
@@ -62,10 +77,16 @@ export const unlikeReply = createAsyncThunk(
 );
 
 const initialState = {
-  items: [], 
+  items: [],
+  likedIds: [],
   status: "idle",
   error: null,
 };
+
+function replaceReply(state, updatedReply) {
+  const index = state.items.findIndex((r) => r.replyId === updatedReply.replyId);
+  if (index !== -1) state.items[index] = updatedReply;
+}
 
 const replySlice = createSlice({
   name: "replies",
@@ -79,6 +100,7 @@ const replySlice = createSlice({
     builder
       .addCase(fetchRepliesByThread.pending, (state) => {
         state.status = "loading";
+        state.items = [];
       })
       .addCase(fetchRepliesByThread.fulfilled, (state, action) => {
         state.status = "succeeded";
@@ -87,6 +109,10 @@ const replySlice = createSlice({
       .addCase(fetchRepliesByThread.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
+      })
+
+      .addCase(fetchLikedReplyIds.fulfilled, (state, action) => {
+        state.likedIds = action.payload;
       })
 
       .addCase(createReply.fulfilled, (state, action) => {
@@ -99,17 +125,16 @@ const replySlice = createSlice({
 
       .addCase(likeReply.fulfilled, (state, action) => {
         replaceReply(state, action.payload);
+        if (!state.likedIds.includes(action.payload.replyId)) {
+          state.likedIds.push(action.payload.replyId);
+        }
       })
       .addCase(unlikeReply.fulfilled, (state, action) => {
         replaceReply(state, action.payload);
+        state.likedIds = state.likedIds.filter((id) => id !== action.payload.replyId);
       });
   },
 });
 
-function replaceReply(state, updatedReply) {
-  const index = state.items.findIndex((r) => r.replyId === updatedReply.replyId);
-  if (index !== -1) state.items[index] = updatedReply;
-}
-
 export const { clearReplies } = replySlice.actions;
-export default replySlice.reducer; 
+export default replySlice.reducer;

@@ -1,6 +1,5 @@
 package com.example.server.dto;
 import lombok.Data;
-import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 
 @Data

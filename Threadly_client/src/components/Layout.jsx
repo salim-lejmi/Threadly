@@ -65,8 +65,7 @@ function Layout() {
         <div className="panel-card">
           <h2>About Threadly</h2>
           <p>
-            A small place to post short threads, follow people, like and
-            retweet. Use Search to find people and threads.
+            Find local service providers, save listings you like and follow the ones you trust. Use Search to look by name, category or city.
           </p>
         </div>
         <p className="panel-footer">Threadly · Built for learning</p>

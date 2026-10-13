@@ -13,6 +13,44 @@ export const fetchUserById = createAsyncThunk(
   }
 );
 
+export const updateAvatar = createAsyncThunk(
+  "users/updateAvatar",
+  async (file, { rejectWithValue }) => {
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await axiosInstance.post("/users/me/avatar", form);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(typeof err.response?.data === "string" ? err.response.data : "Upload failed");
+    }
+  }
+);
+
+export const removeAvatar = createAsyncThunk(
+  "users/removeAvatar",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.delete("/users/me/avatar");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(typeof err.response?.data === "string" ? err.response.data : "Failed to remove photo");
+    }
+  }
+);
+
+export const updateBio = createAsyncThunk(
+  "users/updateBio",
+  async (bio, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put("/users/me", { bio });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(typeof err.response?.data === "string" ? err.response.data : "Failed to save bio");
+    }
+  }
+);
+
 const initialState = {
   profileUser: null,
   status: "idle",
@@ -36,6 +74,17 @@ const userSlice = createSlice({
       .addCase(fetchUserById.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
+      })
+
+      // these only run on your own profile, so the result is the profile being shown
+      .addCase(updateAvatar.fulfilled, (state, action) => {
+        state.profileUser = action.payload;
+      })
+      .addCase(removeAvatar.fulfilled, (state, action) => {
+        state.profileUser = action.payload;
+      })
+      .addCase(updateBio.fulfilled, (state, action) => {
+        state.profileUser = action.payload;
       });
   },
 });

@@ -16,11 +16,12 @@ import {
   fetchRetweetsByUser,
 } from "../features/retweet/retweetSlice";
 import PostCard from "../components/PostCard";
-import Avatar from "../components/Avatar";
+import Composer from "../components/Composer";
+import { CATEGORIES } from "../utils/categories";
 
 function FeedPage() {
-  const [threadText, setThreadText] = useState("");
   const [tab, setTab] = useState("following");
+  const [category, setCategory] = useState("");
   const dispatch = useDispatch();
 
   const { items: threads, likedIds, status, error } = useSelector((state) => state.threads);
@@ -30,20 +31,13 @@ function FeedPage() {
   const retweetedIds = retweets.filter((r) => r.thread).map((r) => r.thread.threadId);
 
   useEffect(() => {
-    dispatch(tab === "following" ? fetchFeed() : fetchAllThreads());
-  }, [dispatch, tab]);
+    dispatch(tab === "following" ? fetchFeed() : fetchAllThreads(category));
+  }, [dispatch, tab, category]);
 
   useEffect(() => {
     dispatch(fetchLikedThreadIds());
     dispatch(fetchRetweetsByUser(user.id));
   }, [dispatch, user.id]);
-
-  const handleCreate = (e) => {
-    e.preventDefault();
-    if (!threadText.trim()) return;
-    dispatch(createThread(threadText));
-    setThreadText("");
-  };
 
   return (
     <>
@@ -66,39 +60,43 @@ function FeedPage() {
         </button>
       </div>
 
-      <form className="composer" onSubmit={handleCreate}>
-        <Avatar user={user} />
-        <div className="composer-body">
-          <textarea
-            value={threadText}
-            onChange={(e) => setThreadText(e.target.value)}
-            placeholder="What's happening?"
-            maxLength={280}
-            rows={2}
-          />
-          <div className="composer-footer">
-            <span className={threadText.length > 260 ? "char-count warn" : "char-count"}>
-              {threadText.length}/280
-            </span>
-            <button className="btn btn-primary" type="submit" disabled={!threadText.trim()}>
-              Post
-            </button>
-          </div>
-        </div>
-      </form>
+      <Composer
+        listing
+        user={user}
+        placeholder="Describe your service"
+        submitLabel="Publish listing"
+        onSubmit={(text, file, extra) =>
+          dispatch(createThread({ threadText: text, image: file, ...extra }))
+        }
+      />
 
-      {status === "loading" && <p className="status-text">Loading threads...</p>}
+      {tab === "explore" && (
+        <div className="filter-bar">
+          <select
+            className="field"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {status === "loading" && <p className="status-text">Loading listings...</p>}
       {error && <p className="error-text">{error}</p>}
 
       {status === "succeeded" && threads.length === 0 && (
         <p className="empty-state">
           {tab === "following" ? (
             <>
-              Nothing here yet. Follow people to fill your feed. Try{" "}
+              Nothing here yet. Follow providers to fill your feed. Try{" "}
               <Link to="/search">Search</Link>.
             </>
           ) : (
-            "No threads yet. Be the first to post."
+            "No listings found."
           )}
         </p>
       )}
@@ -107,6 +105,7 @@ function FeedPage() {
         <PostCard
           key={thread.threadId}
           post={thread}
+          href={`/thread/${thread.threadId}`}
           textField="threadText"
           dateField="threadDate"
           likesField="threadLikes"

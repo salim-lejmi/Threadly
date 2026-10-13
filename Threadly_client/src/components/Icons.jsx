@@ -43,3 +43,19 @@ export const TrashIcon = () => (
 export const ArrowLeftIcon = () => (
   <svg {...props}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
 );
+
+export const ImageIcon = () => (
+  <svg {...props}>
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <circle cx="9" cy="9" r="1.8" />
+    <path d="M21 15l-5-5L5 21" />
+  </svg>
+);
+
+export const CloseIcon = () => (
+  <svg {...props}><path d="M18 6L6 18M6 6l12 12" /></svg>
+);
+
+export const CommentIcon = () => (
+  <svg {...props}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></svg>
+);

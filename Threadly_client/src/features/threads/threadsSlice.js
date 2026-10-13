@@ -3,16 +3,17 @@ import axiosInstance from "../../api/axiosInstance";
 
 export const fetchAllThreads = createAsyncThunk(
   "threads/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (category, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/threads");
+      const res = await axiosInstance.get("/threads", {
+        params: category ? { category } : {},
+      });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to fetch threads");
+      return rejectWithValue(err.response?.data || "Failed to fetch listings");
     }
   }
 );
-
 export const fetchFeed = createAsyncThunk(
   "threads/fetchFeed",
   async (_, { rejectWithValue }) => {
@@ -63,16 +64,22 @@ export const fetchLikedThreadIds = createAsyncThunk(
 
 export const createThread = createAsyncThunk(
   "threads/create",
-  async (threadText, { rejectWithValue }) => {
+  async ({ threadText, image, title, category, price, city }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/threads", { threadText });
+      const form = new FormData();
+      form.append("threadText", threadText || "");
+      form.append("title", title || "");
+      form.append("category", category || "");
+      form.append("city", city || "");
+      if (price !== undefined && price !== "") form.append("price", price);
+      if (image) form.append("image", image);
+      const res = await axiosInstance.post("/threads", form);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to create thread");
+      return rejectWithValue(typeof err.response?.data === "string" ? err.response.data : "Failed to create listing");
     }
   }
 );
-
 export const deleteThread = createAsyncThunk(
   "threads/delete",
   async (threadId, { rejectWithValue }) => {
@@ -113,6 +120,7 @@ const initialState = {
   items: [],
   likedIds: [],
   currentThread: null,
+  currentStatus: "idle",
   status: "idle",
   error: null,
 };
@@ -167,8 +175,17 @@ const threadsSlice = createSlice({
         state.error = action.payload;
       })
 
+      .addCase(fetchThreadById.pending, (state) => {
+        state.currentStatus = "loading";
+        state.currentThread = null;
+      })
       .addCase(fetchThreadById.fulfilled, (state, action) => {
+        state.currentStatus = "succeeded";
         state.currentThread = action.payload;
+      })
+      .addCase(fetchThreadById.rejected, (state) => {
+        state.currentStatus = "failed";
+        state.currentThread = null;
       })
 
       .addCase(fetchLikedThreadIds.fulfilled, (state, action) => {
@@ -181,6 +198,9 @@ const threadsSlice = createSlice({
 
       .addCase(deleteThread.fulfilled, (state, action) => {
         state.items = state.items.filter((t) => t.threadId !== action.payload);
+        if (state.currentThread?.threadId === action.payload) {
+          state.currentThread = null;
+        }
       })
 
       .addCase(likeThread.fulfilled, (state, action) => {

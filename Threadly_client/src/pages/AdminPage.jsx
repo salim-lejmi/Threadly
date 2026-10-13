@@ -41,7 +41,7 @@ function AdminPage() {
         <div className="stat-grid">
           <div className="stat-card"><strong>{stats.users}</strong><span>Users</span></div>
           <div className="stat-card"><strong>{stats.banned}</strong><span>Banned</span></div>
-          <div className="stat-card"><strong>{stats.threads}</strong><span>Threads</span></div>
+          <div className="stat-card"><strong>{stats.threads}</strong><span>Listings</span></div>
           <div className="stat-card"><strong>{stats.replies}</strong><span>Replies</span></div>
         </div>
       )}
@@ -51,7 +51,7 @@ function AdminPage() {
           Users
         </button>
         <button className={tab === "threads" ? "tab active" : "tab"} onClick={() => setTab("threads")}>
-          Threads
+          Listings
         </button>
         <button className={tab === "replies" ? "tab active" : "tab"} onClick={() => setTab("replies")}>
           Replies
@@ -89,7 +89,7 @@ function AdminPage() {
 
       {tab === "threads" && (
         <>
-          {threads.length === 0 && <p className="empty-state">No threads.</p>}
+          {threads.length === 0 && <p className="empty-state">No listings.</p>}
           {threads.map((t) => (
             <div key={t.threadId} className="admin-row">
               <div className="admin-row-main">
@@ -100,7 +100,7 @@ function AdminPage() {
               </div>
               <button
                 className="btn btn-danger btn-sm"
-                onClick={() => run(adminDeleteThread(t.threadId), "Delete this thread and its replies?")}
+                onClick={() => run(adminDeleteThread(t.threadId), "Delete this listing and its replies?")}
               >
                 Delete
               </button>

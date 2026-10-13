@@ -1,14 +1,14 @@
 package com.example.server.controller;
 
-import com.example.server.dto.ThreadRequest;
 import com.example.server.model.Thread;
 import com.example.server.model.User;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.ThreadService;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,8 +30,8 @@ public class ThreadController {
     }
 
     @GetMapping
-    public List<Thread> getAllThreads(){
-        return threadService.getAllThreads();
+    public List<Thread> getAllThreads(@RequestParam(value = "category", required = false) String category){
+        return threadService.getAllThreads(category);
     }
 
     @GetMapping("/feed")
@@ -54,9 +54,16 @@ public class ThreadController {
         return threadService.getThreadById(threadId);
     }
 
-    @PostMapping
-    public Thread createThread(@Valid @RequestBody ThreadRequest request, HttpSession session){
-        return threadService.createThread(request, getCurrentUser(session));
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Thread createThread(
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "price", required = false) Long price,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "threadText", required = false) String threadText,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            HttpSession session){
+        return threadService.createThread(title, category, price, city, threadText, image, getCurrentUser(session));
     }
 
     @DeleteMapping("/{threadId}")

@@ -1,14 +1,14 @@
 package com.example.server.controller;
 
-import com.example.server.dto.ReplyRequest;
 import com.example.server.model.Reply;
 import com.example.server.model.User;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.ReplyService;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -39,9 +39,13 @@ public class ReplyController {
         return replyService.getLikedReplyIds(getCurrentUser(session).getId());
     }
 
-    @PostMapping
-    public Reply createReply(@Valid @RequestBody ReplyRequest request, HttpSession session, @PathVariable long threadId){
-        return replyService.createReply(request, getCurrentUser(session), threadId);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Reply createReply(
+            @PathVariable long threadId,
+            @RequestParam(value = "replyText", required = false) String replyText,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            HttpSession session){
+        return replyService.createReply(replyText, image, getCurrentUser(session), threadId);
     }
 
     @DeleteMapping("/{replyId}")

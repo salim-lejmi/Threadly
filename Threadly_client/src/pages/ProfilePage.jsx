@@ -1,7 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, Link } from "react-router-dom";
-import { fetchUserById } from "../features/users/userSlice";
+import {
+  fetchUserById,
+  updateAvatar,
+  removeAvatar,
+  updateBio,
+} from "../features/users/userSlice";
 import {
   fetchThreadsByUser,
   fetchLikedThreadIds,
@@ -25,8 +30,9 @@ import {
 import PostCard from "../components/PostCard";
 import Avatar from "../components/Avatar";
 import { ArrowLeftIcon } from "../components/Icons";
+import { ACCEPT, validateImage } from "../utils/image";
 
-function ProfilePage() {
+function ProfileContent() {
   const { userId } = useParams();
   const dispatch = useDispatch();
 
@@ -35,6 +41,13 @@ function ProfilePage() {
   const { items: myRetweets, profileItems: profileRetweets } = useSelector((state) => state.retweet);
   const { following, followers } = useSelector((state) => state.follow);
   const { user: currentUser } = useSelector((state) => state.auth);
+
+  const [editing, setEditing] = useState(false);
+  const [bio, setBio] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const fileInput = useRef(null);
 
   const retweetedIds = myRetweets.filter((r) => r.thread).map((r) => r.thread.threadId);
 
@@ -60,7 +73,6 @@ function ProfilePage() {
   const isOwnProfile = currentUser.id === profileUser.id;
   const isFollowing = followers.some((f) => f.follower.id === currentUser.id);
 
-  // own threads + retweets, newest first
   const timeline = [
     ...threads.map((t) => ({
       key: `post-${t.threadId}`,
@@ -100,6 +112,46 @@ function ProfilePage() {
     dispatch(fetchProfileRetweets(userId));
   };
 
+  // ----- edit profile -----
+  const openEditor = () => {
+    setBio(profileUser.bio || "");
+    setEditError("");
+    setSaved(false);
+    setEditing(!editing);
+  };
+
+  const uploadPhoto = async (file) => {
+    if (!file) return;
+    const problem = validateImage(file);
+    if (problem) {
+      setEditError(problem);
+      return;
+    }
+    setEditError("");
+    const result = await dispatch(updateAvatar(file));
+    if (updateAvatar.rejected.match(result)) setEditError(result.payload);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    uploadPhoto(e.dataTransfer.files[0]);
+  };
+
+  const handleRemovePhoto = async () => {
+    setEditError("");
+    const result = await dispatch(removeAvatar());
+    if (removeAvatar.rejected.match(result)) setEditError(result.payload);
+  };
+
+  const handleSaveBio = async () => {
+    setEditError("");
+    setSaved(false);
+    const result = await dispatch(updateBio(bio));
+    if (updateBio.rejected.match(result)) setEditError(result.payload);
+    else setSaved(true);
+  };
+
   return (
     <>
       <header className="page-header page-header-profile">
@@ -108,7 +160,7 @@ function ProfilePage() {
         </Link>
         <div>
           <h1>{profileUser.username}</h1>
-          <span className="page-subtitle">{threads.length} threads</span>
+          <span className="page-subtitle">{threads.length} listings</span>
         </div>
       </header>
 
@@ -117,16 +169,19 @@ function ProfilePage() {
       <section className="profile-info">
         <div className="profile-top">
           <Avatar user={profileUser} large />
-          {!isOwnProfile &&
-            (isFollowing ? (
-              <button className="btn btn-outline" onClick={handleUnfollow}>
-                Unfollow
-              </button>
-            ) : (
-              <button className="btn btn-primary" onClick={handleFollow}>
-                Follow
-              </button>
-            ))}
+          {isOwnProfile ? (
+            <button className="btn btn-neutral" onClick={openEditor}>
+              {editing ? "Close" : "Edit profile"}
+            </button>
+          ) : isFollowing ? (
+            <button className="btn btn-outline" onClick={handleUnfollow}>
+              Unfollow
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={handleFollow}>
+              Follow
+            </button>
+          )}
         </div>
 
         <h2 className="profile-name">{profileUser.username}</h2>
@@ -140,18 +195,72 @@ function ProfilePage() {
         </p>
       </section>
 
+      {isOwnProfile && editing && (
+        <section className="edit-panel">
+          <div
+            className={dragging ? "dropzone dragging" : "dropzone"}
+            onClick={() => fileInput.current.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+          >
+            <Avatar user={profileUser} />
+            <span>Drop a photo here, or click to choose one</span>
+          </div>
+          <input
+            ref={fileInput}
+            type="file"
+            accept={ACCEPT}
+            hidden
+            onChange={(e) => {
+              uploadPhoto(e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+
+          {profileUser.profilePicture && (
+            <button className="btn btn-outline btn-sm edit-remove" onClick={handleRemovePhoto}>
+              Remove photo
+            </button>
+          )}
+
+          <label htmlFor="bio" className="edit-label">Bio</label>
+          <textarea
+            id="bio"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            maxLength={160}
+            rows={3}
+            placeholder="Tell people about yourself"
+          />
+
+          {editError && <p className="composer-error">{editError}</p>}
+          {saved && <p className="edit-saved">Saved</p>}
+
+          <div className="edit-actions">
+            <button className="btn btn-primary" onClick={handleSaveBio}>
+              Save bio
+            </button>
+          </div>
+        </section>
+      )}
+
       <div className="tab-bar">
-        <span className="tab active">Threads</span>
+        <span className="tab active">Listings</span>
       </div>
 
       {threadStatus === "succeeded" && timeline.length === 0 && (
-        <p className="empty-state">No threads yet.</p>
+        <p className="empty-state">No listings yet.</p>
       )}
 
       {timeline.map((entry) => (
         <PostCard
           key={entry.key}
           post={entry.thread}
+          href={`/thread/${entry.thread.threadId}`}
           retweetedBy={entry.retweetedBy}
           textField="threadText"
           dateField="threadDate"
@@ -168,6 +277,11 @@ function ProfilePage() {
       ))}
     </>
   );
+}
+
+function ProfilePage() {
+  const { userId } = useParams();
+  return <ProfileContent key={userId} />;
 }
 
 export default ProfilePage;
