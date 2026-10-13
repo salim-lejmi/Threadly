@@ -5,17 +5,19 @@ export const fetchDashboard = createAsyncThunk(
   "admin/fetchDashboard",
   async (_, { rejectWithValue }) => {
     try {
-      const [stats, users, threads, replies] = await Promise.all([
+      const [stats, users, threads, replies, flagged] = await Promise.all([
         axiosInstance.get("/admin/stats"),
         axiosInstance.get("/admin/users"),
         axiosInstance.get("/admin/threads"),
         axiosInstance.get("/admin/replies"),
+        axiosInstance.get("/admin/flagged"),
       ]);
       return {
         stats: stats.data,
         users: users.data,
         threads: threads.data,
         replies: replies.data,
+        flagged: flagged.data,
       };
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to load dashboard");
@@ -54,7 +56,7 @@ export const adminDeleteThread = createAsyncThunk(
       await axiosInstance.delete(`/admin/threads/${threadId}`);
       return threadId;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to delete thread");
+      return rejectWithValue(err.response?.data || "Failed to delete listing");
     }
   }
 );
@@ -71,11 +73,24 @@ export const adminDeleteReply = createAsyncThunk(
   }
 );
 
+export const dismissFlag = createAsyncThunk(
+  "admin/dismissFlag",
+  async (threadId, { rejectWithValue }) => {
+    try {
+      await axiosInstance.post(`/admin/threads/${threadId}/dismiss`);
+      return threadId;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to dismiss");
+    }
+  }
+);
+
 const initialState = {
   stats: null,
   users: [],
   threads: [],
   replies: [],
+  flagged: [],
   status: "idle",
   error: null,
 };
@@ -95,13 +110,14 @@ const adminSlice = createSlice({
         state.users = action.payload.users;
         state.threads = action.payload.threads;
         state.replies = action.payload.replies;
+        state.flagged = action.payload.flagged;
       })
       .addCase(fetchDashboard.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       });
 
-    [banUser, unbanUser, adminDeleteThread, adminDeleteReply].forEach((thunk) => {
+    [banUser, unbanUser, adminDeleteThread, adminDeleteReply, dismissFlag].forEach((thunk) => {
       builder.addCase(thunk.rejected, (state, action) => {
         state.error = action.payload;
       });

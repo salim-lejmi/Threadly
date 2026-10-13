@@ -7,19 +7,21 @@ import {
   unbanUser,
   adminDeleteThread,
   adminDeleteReply,
+  dismissFlag,
 } from "../features/admin/adminSlice";
 import Avatar from "../components/Avatar";
 
 function AdminPage() {
   const [tab, setTab] = useState("users");
   const dispatch = useDispatch();
-  const { stats, users, threads, replies, status, error } = useSelector((state) => state.admin);
+  const { stats, users, threads, replies, flagged, status, error } = useSelector(
+    (state) => state.admin
+  );
 
   useEffect(() => {
     dispatch(fetchDashboard());
   }, [dispatch]);
 
-  // run an admin action, then reload the dashboard so everything is up to date
   const run = async (action, question) => {
     if (!window.confirm(question)) return;
     await dispatch(action);
@@ -43,12 +45,16 @@ function AdminPage() {
           <div className="stat-card"><strong>{stats.banned}</strong><span>Banned</span></div>
           <div className="stat-card"><strong>{stats.threads}</strong><span>Listings</span></div>
           <div className="stat-card"><strong>{stats.replies}</strong><span>Replies</span></div>
+          <div className="stat-card"><strong>{stats.flagged}</strong><span>Flagged</span></div>
         </div>
       )}
 
       <div className="tab-bar">
         <button className={tab === "users" ? "tab active" : "tab"} onClick={() => setTab("users")}>
           Users
+        </button>
+        <button className={tab === "flagged" ? "tab active" : "tab"} onClick={() => setTab("flagged")}>
+          Flagged{flagged.length > 0 ? ` (${flagged.length})` : ""}
         </button>
         <button className={tab === "threads" ? "tab active" : "tab"} onClick={() => setTab("threads")}>
           Listings
@@ -87,6 +93,49 @@ function AdminPage() {
           </div>
         ))}
 
+      {tab === "flagged" && (
+        <>
+          <p className="admin-hint">
+            Listings the scam model rated as high risk. Dismiss means "this one is fine".
+          </p>
+          {flagged.length === 0 && <p className="empty-state">Nothing flagged.</p>}
+          {flagged.map(({ thread: t, riskScore }) => (
+            <div key={t.threadId} className="admin-row">
+              <div className="admin-row-main">
+                <strong>@{t.createdBy.username}</strong>
+                <span className="badge badge-risk">{Math.round(riskScore * 100)}% risk</span>
+                {t.createdBy.banned && <span className="badge badge-banned">banned</span>}
+                {t.title && <p><strong>{t.title}</strong></p>}
+                <p>{t.threadText}</p>
+                <div className="admin-row-sub">{formatDate(t.threadDate)}</div>
+              </div>
+              <div className="admin-actions">
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => run(dismissFlag(t.threadId), "Mark this listing as safe?")}
+                >
+                  Dismiss
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => run(adminDeleteThread(t.threadId), "Delete this listing and its replies?")}
+                >
+                  Delete
+                </button>
+                {!t.createdBy.banned && t.createdBy.role !== "role-admin" && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => run(banUser(t.createdBy.id), `Ban @${t.createdBy.username}?`)}
+                  >
+                    Ban user
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
       {tab === "threads" && (
         <>
           {threads.length === 0 && <p className="empty-state">No listings.</p>}
@@ -95,6 +144,7 @@ function AdminPage() {
               <div className="admin-row-main">
                 <strong>@{t.createdBy.username}</strong>
                 {t.createdBy.banned && <span className="badge badge-banned">banned</span>}
+                {t.title && <p><strong>{t.title}</strong></p>}
                 <p>{t.threadText}</p>
                 <div className="admin-row-sub">{formatDate(t.threadDate)}</div>
               </div>

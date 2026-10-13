@@ -39,6 +39,11 @@ public class ThreadController {
         return threadService.getFeed(getCurrentUser(session).getId());
     }
 
+    @GetMapping("/recommended")
+    public List<Thread> getRecommended(HttpSession session){
+        return threadService.getRecommended(getCurrentUser(session));
+    }
+
     @GetMapping("/liked")
     public List<Long> getLikedThreadIds(HttpSession session){
         return threadService.getLikedThreadIds(getCurrentUser(session).getId());
@@ -52,6 +57,11 @@ public class ThreadController {
     @GetMapping("/{threadId}")
     public Thread getThreadById(@PathVariable long threadId){
         return threadService.getThreadById(threadId);
+    }
+
+    @GetMapping("/{threadId}/similar")
+    public List<Thread> getSimilar(@PathVariable long threadId){
+        return threadService.getSimilar(threadId);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

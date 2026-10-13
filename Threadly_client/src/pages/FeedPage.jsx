@@ -10,6 +10,7 @@ import {
   likeThread,
   unlikeThread,
 } from "../features/threads/threadsSlice";
+import { fetchRecommended } from "../features/recommend/recommendSlice";
 import {
   retweetThread,
   undoRetweetThread,
@@ -25,13 +26,22 @@ function FeedPage() {
   const dispatch = useDispatch();
 
   const { items: threads, likedIds, status, error } = useSelector((state) => state.threads);
+  const { recommended, recommendedStatus } = useSelector((state) => state.recommend);
   const { items: retweets } = useSelector((state) => state.retweet);
   const { user } = useSelector((state) => state.auth);
 
   const retweetedIds = retweets.filter((r) => r.thread).map((r) => r.thread.threadId);
 
+  const isForYou = tab === "foryou";
+  const list = isForYou ? recommended : threads;
+  const listStatus = isForYou ? recommendedStatus : status;
+
   useEffect(() => {
-    dispatch(tab === "following" ? fetchFeed() : fetchAllThreads(category));
+    if (tab === "foryou") {
+      dispatch(fetchRecommended());
+    } else {
+      dispatch(tab === "following" ? fetchFeed() : fetchAllThreads(category));
+    }
   }, [dispatch, tab, category]);
 
   useEffect(() => {
@@ -57,6 +67,12 @@ function FeedPage() {
           onClick={() => setTab("explore")}
         >
           Explore
+        </button>
+        <button
+          className={tab === "foryou" ? "tab active" : "tab"}
+          onClick={() => setTab("foryou")}
+        >
+          For you
         </button>
       </div>
 
@@ -85,23 +101,24 @@ function FeedPage() {
         </div>
       )}
 
-      {status === "loading" && <p className="status-text">Loading listings...</p>}
-      {error && <p className="error-text">{error}</p>}
+      {listStatus === "loading" && <p className="status-text">Loading listings...</p>}
+      {!isForYou && error && <p className="error-text">{error}</p>}
 
-      {status === "succeeded" && threads.length === 0 && (
+      {listStatus === "succeeded" && list.length === 0 && (
         <p className="empty-state">
-          {tab === "following" ? (
+          {tab === "following" && (
             <>
               Nothing here yet. Follow providers to fill your feed. Try{" "}
               <Link to="/search">Search</Link>.
             </>
-          ) : (
-            "No listings found."
           )}
+          {tab === "explore" && "No listings found."}
+          {isForYou &&
+            "No recommendations yet. Save a few listings with the heart icon and similar ones will show up here."}
         </p>
       )}
 
-      {threads.map((thread) => (
+      {list.map((thread) => (
         <PostCard
           key={thread.threadId}
           post={thread}

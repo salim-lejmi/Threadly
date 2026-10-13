@@ -16,6 +16,7 @@ import {
   likeReply,
   unlikeReply,
 } from "../features/replies/replySlice";
+import { fetchSimilar } from "../features/recommend/recommendSlice";
 import {
   retweetThread,
   undoRetweetThread,
@@ -34,6 +35,7 @@ function ThreadDetailPage() {
   const { items: replies, likedIds: likedReplyIds, status: replyStatus } = useSelector(
     (state) => state.replies
   );
+  const { similar, similarStatus } = useSelector((state) => state.recommend);
   const { items: retweets } = useSelector((state) => state.retweet);
   const { user } = useSelector((state) => state.auth);
 
@@ -43,6 +45,7 @@ function ThreadDetailPage() {
   useEffect(() => {
     dispatch(fetchThreadById(threadId));
     dispatch(fetchRepliesByThread(threadId));
+    dispatch(fetchSimilar(threadId));
     dispatch(fetchLikedThreadIds());
     dispatch(fetchLikedReplyIds(threadId));
     dispatch(fetchRetweetsByUser(user.id));
@@ -53,7 +56,7 @@ function ThreadDetailPage() {
   }
 
   if (!thread || thread.threadId !== Number(threadId)) {
-    return <p className="status-text">Loading thread...</p>;
+    return <p className="status-text">Loading listing...</p>;
   }
 
   const handleDeleteThread = async () => {
@@ -67,7 +70,7 @@ function ThreadDetailPage() {
         <Link to="/" className="icon-button" aria-label="Back to feed">
           <ArrowLeftIcon />
         </Link>
-<h1>Listing</h1>
+        <h1>Listing</h1>
       </header>
 
       <PostCard
@@ -111,6 +114,30 @@ function ThreadDetailPage() {
           onUnlike={() => dispatch(unlikeReply({ threadId: thread.threadId, replyId: reply.replyId }))}
           onDelete={() => dispatch(deleteReply({ threadId: thread.threadId, replyId: reply.replyId }))}
           canDelete={reply.createdBy.id === user.id || isAdmin}
+        />
+      ))}
+
+      <h2 className="section-heading">Similar listings</h2>
+      {similarStatus === "loading" && <p className="status-text">Finding similar listings...</p>}
+      {similarStatus === "succeeded" && similar.length === 0 && (
+        <p className="empty-state">No similar listings found.</p>
+      )}
+      {similar.map((t) => (
+        <PostCard
+          key={t.threadId}
+          post={t}
+          href={`/thread/${t.threadId}`}
+          textField="threadText"
+          dateField="threadDate"
+          likesField="threadLikes"
+          liked={likedIds.includes(t.threadId)}
+          retweeted={retweetedIds.includes(t.threadId)}
+          onLike={() => dispatch(likeThread(t.threadId))}
+          onUnlike={() => dispatch(unlikeThread(t.threadId))}
+          onRetweet={() => dispatch(retweetThread(t.threadId))}
+          onUndoRetweet={() => dispatch(undoRetweetThread(t.threadId))}
+          onDelete={() => dispatch(deleteThread(t.threadId))}
+          canDelete={t.createdBy.id === user.id}
         />
       ))}
     </>

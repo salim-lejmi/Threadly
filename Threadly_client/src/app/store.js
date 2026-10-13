@@ -7,6 +7,7 @@ import retweetReducer from "../features/retweet/retweetSlice";
 import usersReducer from "../features/users/userSlice";
 import searchReducer from "../features/search/searchSlice";
 import adminReducer from "../features/admin/adminSlice";
+import recommendReducer from "../features/recommend/recommendSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,5 +19,6 @@ export const store = configureStore({
     users: usersReducer,
     search: searchReducer,
     admin: adminReducer,
+    recommend: recommendReducer,
   },
 });

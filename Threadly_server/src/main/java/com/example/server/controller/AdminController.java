@@ -1,5 +1,6 @@
 package com.example.server.controller;
 
+import com.example.server.dto.FlaggedListing;
 import com.example.server.exception.ForbiddenException;
 import com.example.server.model.Reply;
 import com.example.server.model.Thread;
@@ -66,6 +67,18 @@ public class AdminController {
     public List<Thread> threads(HttpSession session){
         requireAdmin(session);
         return adminService.getRecentThreads();
+    }
+
+    @GetMapping("/flagged")
+    public List<FlaggedListing> flagged(HttpSession session){
+        requireAdmin(session);
+        return adminService.getFlagged();
+    }
+
+    @PostMapping("/threads/{threadId}/dismiss")
+    public void dismiss(@PathVariable long threadId, HttpSession session){
+        requireAdmin(session);
+        adminService.dismissFlag(threadId);
     }
 
     @DeleteMapping("/threads/{threadId}")

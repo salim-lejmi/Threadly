@@ -1,5 +1,6 @@
 package com.example.server.service;
 
+import com.example.server.dto.FlaggedListing;
 import com.example.server.exception.ForbiddenException;
 import com.example.server.model.Reply;
 import com.example.server.model.Thread;
@@ -8,6 +9,7 @@ import com.example.server.repository.ReplyRepository;
 import com.example.server.repository.ThreadRepository;
 import com.example.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -22,12 +24,16 @@ public class AdminService {
     private final ThreadRepository threadRepository;
     private final ReplyRepository replyRepository;
 
+    @Value("${app.ml.risk-threshold:0.7}")
+    private double riskThreshold;
+
     public Map<String, Long> getStats(){
         Map<String, Long> stats = new LinkedHashMap<>();
         stats.put("users", userRepository.count());
         stats.put("banned", userRepository.countByBannedTrue());
         stats.put("threads", threadRepository.count());
         stats.put("replies", replyRepository.count());
+        stats.put("flagged", threadRepository.countByRiskScoreGreaterThanEqualAndRiskDismissedFalse(riskThreshold));
         return stats;
     }
 
@@ -43,6 +49,21 @@ public class AdminService {
         return replyRepository.findTop50ByOrderByReplyDateDesc();
     }
 
+    public List<FlaggedListing> getFlagged(){
+        return threadRepository
+                .findTop50ByRiskScoreGreaterThanEqualAndRiskDismissedFalseOrderByRiskScoreDesc(riskThreshold)
+                .stream()
+                .map(t -> new FlaggedListing(t, t.getRiskScore()))
+                .toList();
+    }
+
+    public void dismissFlag(long threadId){
+        Thread thread = threadRepository.findById(threadId)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+        thread.setRiskDismissed(true);
+        threadRepository.save(thread);
+    }
+
     public User setBanned(long targetId, boolean banned){
         User target = userRepository.findById(targetId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -51,4 +72,5 @@ public class AdminService {
         }
         target.setBanned(banned);
         return userRepository.save(target);
-    }}
+    }
+}

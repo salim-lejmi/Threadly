@@ -1,5 +1,6 @@
 package com.example.server.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -29,6 +30,13 @@ public class Thread {
     private Long threadRetweets;
 
     private String imageUrl;
+
+    @JsonIgnore
+    private Double riskScore;
+
+    @JsonIgnore
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean riskDismissed = false;
 
     @ManyToOne
     @JoinColumn(name = "created_by_id")

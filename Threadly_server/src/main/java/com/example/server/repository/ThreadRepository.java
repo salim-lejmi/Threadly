@@ -16,6 +16,9 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     List<Thread> findByCreatedBy_IdInAndCreatedBy_BannedFalseOrderByThreadDateDesc(Collection<Long> userIds);
     List<Thread> findTop50ByOrderByThreadDateDesc();
 
+    List<Thread> findTop50ByRiskScoreGreaterThanEqualAndRiskDismissedFalseOrderByRiskScoreDesc(double min);
+    long countByRiskScoreGreaterThanEqualAndRiskDismissedFalse(double min);
+
     @Query("""
             select t from Thread t
             where t.createdBy.banned = false

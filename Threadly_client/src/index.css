@@ -1135,3 +1135,39 @@ img.avatar {
     grid-template-columns: 1fr;
   }
 }
+/* ============ ML============ */
+.stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.badge-risk {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge-risk {
+    color: #fbbf24;
+  }
+}
+
+.admin-hint {
+  padding: 12px 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-heading {
+  padding: 14px 16px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-top: 8px solid var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}

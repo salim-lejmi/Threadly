@@ -11,8 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -32,6 +36,7 @@ public class ThreadService {
     private final RetweetRepository retweetRepository;
     private final FollowRepository followRepository;
     private final FileStorageService fileStorageService;
+    private final MlService mlService;
 
     public List<Thread> getAllThreads(String category){
         if (category == null || category.isBlank()){
@@ -96,8 +101,53 @@ public class ThreadService {
         thread.setThreadText(cleanText);
         thread.setImageUrl(fileStorageService.saveImage(image));
         thread.setCreatedBy(currentUser);
+
+         thread.setRiskScore(mlService.scoreRisk(MlService.listingText(thread)));
+
         return threadRepository.save(thread);
     }
+
+    // ----- recommendations -----
+
+    public List<Thread> getSimilar(long threadId){
+        Thread base = getThreadById(threadId);
+        List<Thread> candidates = candidatePool(t -> t.getThreadId() != threadId);
+        return rank(List.of(MlService.listingText(base)), candidates, 5);
+    }
+
+    public List<Thread> getRecommended(User user){
+        List<Long> savedIds = getLikedThreadIds(user.getId());
+        if (savedIds.isEmpty()){
+            return List.of();
+        }
+        List<String> liked = threadRepository.findAllById(savedIds).stream()
+                .limit(20)
+                .map(MlService::listingText)
+                .toList();
+
+        Set<Long> saved = new HashSet<>(savedIds);
+        List<Thread> candidates = candidatePool(
+                t -> !saved.contains(t.getThreadId()) && t.getCreatedBy().getId() != user.getId());
+        return rank(liked, candidates, 10);
+    }
+
+    private List<Thread> candidatePool(java.util.function.Predicate<Thread> filter){
+        return threadRepository.findAllByCreatedBy_BannedFalseOrderByThreadDateDesc().stream()
+                .filter(filter)
+                .limit(200)
+                .toList();
+    }
+
+    private List<Thread> rank(List<String> liked, List<Thread> candidates, int top){
+        Map<Long, Thread> byId = candidates.stream()
+                .collect(Collectors.toMap(Thread::getThreadId, t -> t));
+        return mlService.recommend(liked, candidates, top).stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    // ----- delete / like -----
 
     @Transactional
     public void deleteThread(long threadId, User currentUser){
